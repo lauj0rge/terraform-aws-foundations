@@ -1,0 +1,33 @@
+component:
+  name: landing_zone_ssm_patch_group
+  dependsOn:
+    - landing_zone_ssm_patch_baseline
+  template:
+    dynamic:
+      data:
+        terraform_remote_state:
+          - component: landing_zone_ssm_patch_baseline
+            name: landing_zone_ssm_patch_baseline
+    locals:
+      elements_landing_zone_ssm_patch_group_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_ssm_patch_group_resource"]
+      remote_state_ssm_patch_baseline: >-
+        data.terraform_remote_state.landing_zone_ssm_patch_baseline.outputs["landing_zone_ssm_patch_baseline_ids"]
+    resource:
+      aws_ssm_patch_group:
+        landing_zone_ssm_patch_group:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_ssm_patch_group_resource"])
+          patch_group: >-
+            local.elements_landing_zone_ssm_patch_group_map["config_${count.index}"]["patch_group"]
+          baseline_id: >-
+            local.remote_state_ssm_patch_baseline["${tfvar.terrahub["landing_zone_providers"]["0"]}"][local.elements_landing_zone_ssm_patch_group_map["config_${count.index}"]["ssm_patch_baseline_name"]]
+    output:
+      ids:
+        value: aws_ssm_patch_baseline.landing_zone_ssm_patch_group.*.id
+      landing_zone_ssm_patch_group_ids:
+        value: >-
+          { for ssm_patch_group in
+          aws_ssm_patch_baseline.landing_zone_ssm_patch_group.*:
+          ssm_patch_group.id => ssm_patch_group.id }

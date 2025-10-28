@@ -1,0 +1,24 @@
+component:
+  name: landing_zone_config_delivery_channel
+  template:
+    locals:
+      elements_landing_zone_config_delivery_channel_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_delivery_channel_resource"]
+    resource:
+      aws_config_delivery_channel:
+        landing_zone_config_delivery_channel:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_delivery_channel_resource"])
+          name: >-
+            local.elements_landing_zone_config_delivery_channel_map["config_${count.index}"]["name"]
+          s3_bucket_name: >-
+            local.elements_landing_zone_config_delivery_channel_map["config_${count.index}"]["s3_bucket_name"]
+    output:
+      ids:
+        value: aws_config_delivery_channel.landing_zone_config_delivery_channel.*.id
+      landing_zone_config_delivery_channel_ids:
+        value: >-
+          { for config_delivery_channel in
+          aws_config_delivery_channel.landing_zone_config_delivery_channel.*:
+          config_delivery_channel.name => config_delivery_channel.id }

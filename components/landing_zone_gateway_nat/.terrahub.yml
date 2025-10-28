@@ -1,0 +1,67 @@
+component:
+  name: landing_zone_gateway_nat
+  dependsOn:
+    - landing_zone_eip
+    - landing_zone_subnet
+  template:
+    locals:
+      elements_landing_zone_vpc_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_data"]
+      elements_landing_zone_subnet_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_subnet_data"]
+      elements_landing_zone_eip_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_eip_data"]
+      elements_landing_zone_gateway_nat_tags_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_gateway_nat_tags"]
+    data:
+      aws_vpc:
+        vpc_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_data"])
+          cidr_block: >-
+            local.elements_landing_zone_vpc_data_map["config_${count.index}"]["cidr_block"]
+      aws_subnet:
+        subnet_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_subnet_data"])
+          cidr_block: >-
+            local.elements_landing_zone_subnet_data_map["config_${count.index}"]["cidr_block"]
+          vpc_id: 'element(data.aws_vpc.vpc_selected.*.id, count.index)'
+      aws_eip:
+        eip_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_eip_data"])
+          public_ip: >-
+            local.elements_landing_zone_eip_data_map["config_${count.index}"]["public_ip"]
+    resource:
+      aws_nat_gateway:
+        landing_zone_gateway_nat:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_gateway_nat_tags"])
+          allocation_id: 'element(data.aws_eip.eip_selected.*.id, count.index)'
+          subnet_id: 'element(data.aws_subnet.subnet_selected.*.id, count.index)'
+          tags: >-
+            merge(local.elements_landing_zone_gateway_nat_tags_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]} ${count.index}")))
+    output:
+      ids:
+        value: aws_nat_gateway.landing_zone_gateway_nat.*.id
+      thub_ids:
+        value: aws_nat_gateway.landing_zone_gateway_nat.*.id
+      network_interface_ids:
+        value: aws_nat_gateway.landing_zone_gateway_nat.*.network_interface_id
+      landing_zone_gateway_nat_ids:
+        value: >-
+          { for gateway_nat in aws_nat_gateway.landing_zone_gateway_nat.*:
+          lookup(gateway_nat.tags, "LzHash", gateway_nat.id) => gateway_nat.id }
+      landing_zone_gateway_nat_network_interface_ids:
+        value: >-
+          { for gateway_nat in aws_nat_gateway.landing_zone_gateway_nat.*:
+          lookup(gateway_nat.tags, "LzHash", gateway_nat.id) =>
+          gateway_nat.network_interface_id }

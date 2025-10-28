@@ -1,0 +1,46 @@
+component:
+  name: landing_zone_tgw_route_table
+  dependsOn:
+    - landing_zone_gateway_tgw
+  template:
+    locals:
+      elements_landing_zone_route_table_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_tgw_route_table_resource"]
+      elements_landing_zone_tgw_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_tgw_data"]
+    data:
+      aws_ec2_transit_gateway:
+        gateway_tgw_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_tgw_data"])
+          filter!:
+            - name: options.amazon-side-asn
+              values:
+                - >-
+                  local.elements_landing_zone_tgw_data_map["config_${count.index}"]["amazon_side_asn"]
+    resource:
+      aws_ec2_transit_gateway_route_table:
+        landing_zone_tgw_route_table:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_tgw_route_table_resource"])
+          transit_gateway_id: >-
+            element(data.aws_ec2_transit_gateway.gateway_tgw_selected.*.id,
+            count.index)
+          tags: >-
+            merge(local.elements_landing_zone_route_table_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]} ${count.index}")))
+    output:
+      ids:
+        value: aws_ec2_transit_gateway_route_table.landing_zone_tgw_route_table.*.id
+      thub_ids:
+        value: aws_ec2_transit_gateway_route_table.landing_zone_tgw_route_table.*.id
+      landing_zone_tgw_route_table_ids:
+        value: >-
+          { for tgw_route_table in
+          aws_ec2_transit_gateway_route_table.landing_zone_tgw_route_table.*:
+          lookup(tgw_route_table.tags, "LzHash", tgw_route_table.id) =>
+          tgw_route_table.id }

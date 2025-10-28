@@ -1,0 +1,60 @@
+component:
+  name: landing_zone_subnet
+  dependsOn:
+    - landing_zone_vpc
+  template:
+    locals:
+      elements_landing_zone_vpc_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_data"]
+      elements_landing_zone_subnet_tags_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_subnet_tags"]
+      elements_landing_zone_subnet_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_subnet_resource"]
+    data:
+      aws_vpc:
+        vpc_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_data"])
+          cidr_block: >-
+            local.elements_landing_zone_vpc_data_map["config_${count.index}"]["cidr_block"]
+    resource:
+      aws_subnet:
+        landing_zone_subnet:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_subnet_resource"])
+          vpc_id: 'element(data.aws_vpc.vpc_selected.*.id, count.index)'
+          cidr_block: >-
+            local.elements_landing_zone_subnet_map["config_${count.index}"]["cidr_block"]
+          availability_zone: >-
+            local.elements_landing_zone_subnet_map["config_${count.index}"]["availability_zone"]
+          tags: >-
+            merge(local.elements_landing_zone_subnet_tags_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]}
+            ${local.elements_landing_zone_subnet_map["config_${count.index}"]["cidr_block"]}")))
+          assign_ipv6_address_on_creation: >-
+            local.elements_landing_zone_subnet_map["config_${count.index}"]["assign_ipv6_address_on_creation"]
+    output:
+      ids:
+        value: aws_subnet.landing_zone_subnet.*.id
+      thub_ids:
+        value: aws_subnet.landing_zone_subnet.*.id
+      availability_zone_ids:
+        value: aws_subnet.landing_zone_subnet.*.availability_zone_id
+      arns:
+        value: aws_subnet.landing_zone_subnet.*.arn
+      landing_zone_subnet_ids:
+        value: >-
+          { for subnet in aws_subnet.landing_zone_subnet.*: lookup(subnet.tags,
+          "LzHash", subnet.cidr_block) => subnet.id }
+      landing_zone_subnet_availability_zone_ids:
+        value: >-
+          { for subnet in aws_subnet.landing_zone_subnet.*: lookup(subnet.tags,
+          "LzHash", subnet.cidr_block) => subnet.availability_zone_id }
+      landing_zone_subnet_arns:
+        value: >-
+          { for subnet in aws_subnet.landing_zone_subnet.*: lookup(subnet.tags,
+          "LzHash", subnet.cidr_block) => subnet.arn }

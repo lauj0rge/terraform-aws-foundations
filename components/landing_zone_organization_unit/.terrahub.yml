@@ -1,0 +1,36 @@
+component:
+  name: landing_zone_organization_unit
+  dependsOn:
+    - landing_zone_organization
+  template:
+    data:
+      aws_organizations_organization:
+        landing_zone_organization: {}
+    resource:
+      aws_organizations_organizational_unit:
+        landing_zone_organization_unit:
+          count: length(var.landing_zone_organization_unit_names)
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          name: 'element(var.landing_zone_organization_unit_names, count.index)'
+          parent_id: >-
+            data.aws_organizations_organization.landing_zone_organization.roots.0.id
+    output:
+      ids:
+        value: >-
+          aws_organizations_organizational_unit.landing_zone_organization_unit.*.id
+      thub_ids:
+        value: >-
+          aws_organizations_organizational_unit.landing_zone_organization_unit.*.id
+      arns:
+        value: >-
+          aws_organizations_organizational_unit.landing_zone_organization_unit.*.arn
+      landing_zone_organization_unit_ids:
+        value: >-
+          { for ou in
+          aws_organizations_organizational_unit.landing_zone_organization_unit.*:
+          ou.name => ou.id }
+      landing_zone_organization_unit_arns:
+        value: >-
+          { for ou in
+          aws_organizations_organizational_unit.landing_zone_organization_unit.*:
+          ou.name => ou.arn }

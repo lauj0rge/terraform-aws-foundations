@@ -1,0 +1,66 @@
+component:
+  name: landing_zone_ssm_document
+  template:
+    locals:
+      elements_landing_zone_ssm_document_tags_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_ssm_document_tags"]
+      elements_landing_zone_ssm_document_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_ssm_document_resource"]
+    resource:
+      aws_ssm_document:
+        landing_zone_ssm_document:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_ssm_document_resource"])
+          name: >-
+            local.elements_landing_zone_ssm_document_map["config_${count.index}"]["name"]
+          content: >-
+            jsondecode(base64decode(local.elements_landing_zone_ssm_document_map["config_${count.index}"]["content"]))
+          document_format: >-
+            local.elements_landing_zone_ssm_document_map["config_${count.index}"]["document_format"]
+          document_type: >-
+            local.elements_landing_zone_ssm_document_map["config_${count.index}"]["document_type"]
+          permissions:
+            type: >-
+              local.elements_landing_zone_ssm_document_map["config_${count.index}"]["permissions_type"]
+            account_ids: >-
+              local.elements_landing_zone_ssm_document_map["config_${count.index}"]["permissions_account_ids"]
+          tags: >-
+            merge(local.elements_landing_zone_ssm_document_tags_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]}
+            ${local.elements_landing_zone_ssm_document_map["config_${count.index}"]["name"]}")))
+    output:
+      created_dates:
+        value: aws_ssm_document.landing_zone_ssm_document.*.created_date
+      descriptions:
+        value: aws_ssm_document.landing_zone_ssm_document.*.description
+      schema_versions:
+        value: aws_ssm_document.landing_zone_ssm_document.*.schema_version
+      default_versions:
+        value: aws_ssm_document.landing_zone_ssm_document.*.default_version
+      hashes:
+        value: aws_ssm_document.landing_zone_ssm_document.*.hash
+      hash_types:
+        value: aws_ssm_document.landing_zone_ssm_document.*.hash_type
+      latest_versions:
+        value: aws_ssm_document.landing_zone_ssm_document.*.latest_version
+      owners:
+        value: aws_ssm_document.landing_zone_ssm_document.*.owner
+      statuses:
+        value: aws_ssm_document.landing_zone_ssm_document.*.status
+      parameters:
+        value: aws_ssm_document.landing_zone_ssm_document.*.parameter
+      platform_types:
+        value: aws_ssm_document.landing_zone_ssm_document.*.platform_types
+      landing_zone_ssm_document_created_dates:
+        value: >-
+          { for ssm_document in aws_ssm_document.landing_zone_ssm_document.*:
+          lookup(ssm_document.tags, "LzHash", ssm_document.hash) =>
+          ssm_document.created_date }
+      landing_zone_ssm_document_hashes:
+        value: >-
+          { for ssm_document in aws_ssm_document.landing_zone_ssm_document.*:
+          lookup(ssm_document.tags, "LzHash", ssm_document.hash) =>
+          ssm_document.hash }

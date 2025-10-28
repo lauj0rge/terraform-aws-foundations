@@ -1,0 +1,36 @@
+component:
+  name: landing_zone_gateway_cgw
+  dependsOn:
+    - landing_zone_vpc
+  template:
+    locals:
+      elements_landing_zone_gateway_cgw_tags_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_gateway_cgw_tags"]
+      elements_landing_zone_gateway_cgw_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_gateway_cgw_resource"]
+    resource:
+      aws_customer_gateway:
+        landing_zone_gateway_cgw:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_gateway_cgw_resource"])
+          bgp_asn: >-
+            local.elements_landing_zone_gateway_cgw_map["config_${count.index}"]["bgp_asn"]
+          ip_address: >-
+            local.elements_landing_zone_gateway_cgw_map["config_${count.index}"]["ip_address"]
+          type: >-
+            local.elements_landing_zone_gateway_cgw_map["config_${count.index}"]["type"]
+          tags: >-
+            merge(local.elements_landing_zone_gateway_cgw_tags_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]} ${count.index}")))
+    output:
+      ids:
+        value: aws_customer_gateway.landing_zone_gateway_cgw.*.id
+      thub_ids:
+        value: aws_customer_gateway.landing_zone_gateway_cgw.*.id
+      landing_zone_gateway_cgw_ids:
+        value: >-
+          { for gateway_cgw in aws_customer_gateway.landing_zone_gateway_cgw.*:
+          lookup(gateway_cgw.tags, "LzHash", gateway_cgw.id) => gateway_cgw.id }

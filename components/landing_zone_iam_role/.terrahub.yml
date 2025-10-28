@@ -1,0 +1,43 @@
+component:
+  name: landing_zone_iam_role
+  template:
+    locals:
+      elements_landing_zone_iam_role_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_iam_role_resource"]
+    resource:
+      aws_iam_role:
+        landing_zone_iam_role:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_iam_role_resource"])
+          name: >-
+            local.elements_landing_zone_iam_role_map["config_${count.index}"]["name"]
+          path: >-
+            local.elements_landing_zone_iam_role_map["config_${count.index}"]["path"]
+          description: >-
+            local.elements_landing_zone_iam_role_map["config_${count.index}"]["description"]
+          max_session_duration: >-
+            local.elements_landing_zone_iam_role_map["config_${count.index}"]["max_session_duration"]
+          assume_role_policy: >-
+            jsondecode(base64decode(local.elements_landing_zone_iam_role_map["config_${count.index}"]["assume_role_policy"]))
+    output:
+      ids:
+        value: aws_iam_role.landing_zone_iam_role.*.id
+      thub_ids:
+        value: aws_iam_role.landing_zone_iam_role.*.id
+      arns:
+        value: aws_iam_role.landing_zone_iam_role.*.arn
+      names:
+        value: aws_iam_role.landing_zone_iam_role.*.name
+      landing_zone_iam_role_ids:
+        value: >-
+          { for role in aws_iam_role.landing_zone_iam_role.*: role.name =>
+          role.id }
+      landing_zone_iam_role_arns:
+        value: >-
+          { for role in aws_iam_role.landing_zone_iam_role.*: role.name =>
+          role.arn }
+      landing_zone_iam_role_names:
+        value: >-
+          { for role in aws_iam_role.landing_zone_iam_role.*: role.id =>
+          role.name }

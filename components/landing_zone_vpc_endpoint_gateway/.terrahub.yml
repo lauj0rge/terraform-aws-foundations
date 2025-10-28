@@ -1,0 +1,68 @@
+component:
+  name: landing_zone_vpc_endpoint_gateway
+  dependsOn:
+    - landing_zone_vpc
+    - landing_zone_route_table
+  template:
+    locals:
+      elements_landing_zone_vpc_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_data"]
+      elements_landing_zone_route_tables_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_route_tables_data"]
+      elements_landing_zone_vpc_endpoint_gateway_tags_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_endpoint_gateway_tags"]
+      elements_landing_zone_vpc_endpoint_gateway_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_endpoint_gateway_resource"]
+    data:
+      aws_vpc:
+        vpc_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_data"])
+          cidr_block: >-
+            local.elements_landing_zone_vpc_data_map["config_${count.index}"]["cidr_block"]
+      aws_route_tables:
+        route_tables_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_route_tables_data"])
+          vpc_id: 'element(data.aws_vpc.vpc_selected.*.id, count.index)'
+          filter!:
+            name: 'tag:LzHash'
+            values:
+              - >-
+                local.elements_landing_zone_route_tables_data_map["config_${count.index}"]["LzHash"]
+    resource:
+      aws_vpc_endpoint:
+        landing_zone_vpc_endpoint_gateway:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_vpc_endpoint_gateway_resource"])
+          service_name: >-
+            local.elements_landing_zone_vpc_endpoint_gateway_map["config_${count.index}"]["service_name"]
+          vpc_id: 'element(data.aws_vpc.vpc_selected.*.id, count.index)'
+          policy: >-
+            local.elements_landing_zone_vpc_endpoint_gateway_map["config_${count.index}"]["policy"]
+          private_dns_enabled: >-
+            local.elements_landing_zone_vpc_endpoint_gateway_map["config_${count.index}"]["private_dns_enabled"]
+          route_table_ids: >-
+            element(data.aws_route_tables.route_tables_selected.*.ids,
+            count.index)
+          tags: >-
+            merge(local.elements_landing_zone_vpc_endpoint_gateway_tags_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]}
+            ${local.elements_landing_zone_vpc_endpoint_gateway_map["config_${count.index}"]["service_name"]}")))
+          vpc_endpoint_type: Gateway
+    output:
+      ids:
+        value: aws_vpc_endpoint.landing_zone_vpc_endpoint_gateway.*.id
+      thub_ids:
+        value: aws_vpc_endpoint.landing_zone_vpc_endpoint_gateway.*.id
+      landing_zone_vpc_endpoint_gateway_ids:
+        value: >-
+          { for vpc_endpoint_gateway in
+          aws_vpc_endpoint.landing_zone_vpc_endpoint_gateway.*:
+          lookup(vpc_endpoint_gateway.tags, "LzHash", vpc_endpoint_gateway.id)
+          => vpc_endpoint_gateway.id }

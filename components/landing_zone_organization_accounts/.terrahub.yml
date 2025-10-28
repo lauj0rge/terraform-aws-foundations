@@ -1,0 +1,42 @@
+component:
+  name: landing_zone_organization_accounts
+  dependsOn:
+    - landing_zone_organization_unit
+  template:
+    dynamic:
+      data:
+        terraform_remote_state:
+          - component: landing_zone_organization_unit
+            name: landing_zone_organization_unit
+    locals:
+      elements_landing_zone_organization_accounts_map: 'var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider'
+      ou_remote_state: >-
+        data.terraform_remote_state.landing_zone_organization_unit.outputs.landing_zone_organization_unit_ids["default"]
+    resource:
+      aws_organizations_account:
+        landing_zone_organization_accounts:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: length(local.elements_landing_zone_organization_accounts_map)
+          name: >-
+            local.elements_landing_zone_organization_accounts_map["config_${count.index}"]["name"]
+          email: >-
+            local.elements_landing_zone_organization_accounts_map["config_${count.index}"]["email"]
+          parent_id: >-
+            local.ou_remote_state["${local.elements_landing_zone_organization_accounts_map["config_${count.index}"]["organization_unit"]}"]
+    output:
+      ids:
+        value: aws_organizations_account.landing_zone_organization_accounts.*.id
+      thub_ids:
+        value: aws_organizations_account.landing_zone_organization_accounts.*.id
+      arns:
+        value: aws_organizations_account.landing_zone_organization_accounts.*.arn
+      landing_zone_organization_accounts_ids:
+        value: >-
+          { for organization_accounts in
+          aws_organizations_account.landing_zone_organization_accounts.*:
+          organization_accounts.name => organization_accounts.id }
+      landing_zone_organization_accounts_arns:
+        value: >-
+          { for organization_accounts in
+          aws_organizations_account.landing_zone_organization_accounts.*:
+          organization_accounts.name => organization_accounts.arn }

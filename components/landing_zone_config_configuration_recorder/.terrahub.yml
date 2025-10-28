@@ -1,0 +1,26 @@
+component:
+  name: landing_zone_config_configuration_recorder
+  template:
+    locals:
+      elements_landing_zone_config_configuration_recorder_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_configuration_recorder_resource"]
+    resource:
+      aws_config_configuration_recorder:
+        landing_zone_config_configuration_recorder:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_configuration_recorder_resource"])
+          name: >-
+            local.elements_landing_zone_config_configuration_recorder_map["config_${count.index}"]["name"]
+          role_arn: >-
+            arn:aws:iam::${var.${tfvar.terrahub["landing_zone_providers"]["0"]}_account_id}::role/${local.elements_landing_zone_config_configuration_recorder_map["config_${count.index}"]["role_name"]}
+    output:
+      ids:
+        value: >-
+          aws_config_configuration_recorder.landing_zone_config_configuration_recorder.*.id
+      landing_zone_config_configuration_recorder_ids:
+        value: >-
+          { for config_configuration_recorder in
+          aws_config_configuration_recorder.landing_zone_config_configuration_recorder.*:
+          config_configuration_recorder.name => config_configuration_recorder.id
+          }

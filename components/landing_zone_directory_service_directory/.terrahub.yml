@@ -1,0 +1,78 @@
+component:
+  name: landing_zone_directory_service_directory
+  template:
+    locals:
+      elements_landing_zone_subnet_data_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_subnet_data"]
+      elements_landing_zone_directory_service_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_directory_service_resource"]
+    data:
+      aws_vpc:
+        vpc_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          default: true
+      aws_subnet:
+        subnet_selected:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_subnet_data"])
+          availability_zone: >-
+            local.elements_landing_zone_subnet_data_map["config_${count.index}"]["availability_zone"]
+          vpc_id: data.aws_vpc.vpc_selected.id
+    resource:
+      aws_directory_service_directory:
+        landing_zone_directory_service_directory:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_directory_service_resource"])
+          name: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["name"]
+          short_name: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["short_name"]
+          password: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["password"]
+          alias: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["alias"]
+          description: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["description"]
+          edition: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["edition"]
+          enable_sso: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["enable_sso"]
+          size: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["size"]
+          type: >-
+            local.elements_landing_zone_directory_service_map["config_${count.index}"]["type"]
+          vpc_settings!:
+            vpc_id: data.aws_vpc.vpc_selected.id
+            subnet_ids: data.aws_subnet.subnet_selected.*.id
+    output:
+      ids:
+        value: >-
+          aws_directory_service_directory.landing_zone_directory_service_directory.*.id
+      thub_ids:
+        value: >-
+          aws_directory_service_directory.landing_zone_directory_service_directory.*.id
+      access_urls:
+        value: >-
+          aws_directory_service_directory.landing_zone_directory_service_directory.*.access_url
+      aliases:
+        value: >-
+          aws_directory_service_directory.landing_zone_directory_service_directory.*.alias
+      landing_zone_directory_service_directory_ids:
+        value: >-
+          { for directory_service_directory in
+          aws_directory_service_directory.landing_zone_directory_service_directory.*:
+          directory_service_directory.name => directory_service_directory.id }
+      landing_zone_directory_service_directory_access_urls:
+        value: >-
+          { for directory_service_directory in
+          aws_directory_service_directory.landing_zone_directory_service_directory.*:
+          directory_service_directory.name =>
+          directory_service_directory.access_url }
+      landing_zone_directory_service_directory_aliases:
+        value: >-
+          { for directory_service_directory in
+          aws_directory_service_directory.landing_zone_directory_service_directory.*:
+          directory_service_directory.name => directory_service_directory.alias
+          }

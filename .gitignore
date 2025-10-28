@@ -1,0 +1,27 @@
+# Node related
+**/node_modules
+npm-debug.log
+package-lock.json
+
+# IDEs and editors
+.idea/*
+.vscode/*
+/venv/*
+.prettierrc.json
+
+#  Local .terraform directories
+**/.terraform
+**/.backup
+**/saml-metadata
+
+# .tfstate files
+*.tfstate*
+
+# .tfplan files
+*.tfplan*
+
+# .tfimport files
+*.tfimport
+
+# .tfvars files
+*.tfvars

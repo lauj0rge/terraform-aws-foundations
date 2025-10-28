@@ -1,0 +1,40 @@
+component:
+  name: landing_zone_config_configuration_aggregator
+  template:
+    locals:
+      elements_landing_zone_config_configuration_aggregator_tags_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_configuration_aggregator_tags"]
+      elements_landing_zone_config_configuration_aggregator_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_configuration_aggregator_resource"]
+    resource:
+      aws_config_configuration_aggregator:
+        landing_zone_config_configuration_aggregator:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_configuration_aggregator_tags"])
+          name: >-
+            local.elements_landing_zone_config_configuration_aggregator_map["config_${count.index}"]["name"]
+          account_aggregation_source!:
+            account_ids: >-
+              split("|",
+              local.elements_landing_zone_config_configuration_aggregator_map["config_${count.index}"]["account_ids"])
+            regions: >-
+              split("|",
+              local.elements_landing_zone_config_configuration_aggregator_map["config_${count.index}"]["regions"])
+          tags: >-
+            merge(local.elements_landing_zone_config_configuration_aggregator_tags_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]}
+            ${local.elements_landing_zone_config_configuration_aggregator_map["config_${count.index}"]["name"]}")))
+    output:
+      arns:
+        value: >-
+          aws_config_configuration_aggregator.landing_zone_config_configuration_aggregator.*.arn
+      landing_zone_config_configuration_aggregator_arns:
+        value: >-
+          { for config_configuration_aggregator in
+          aws_config_configuration_aggregator.landing_zone_config_configuration_aggregator.*:
+          lookup(config_configuration_aggregator.tags, "LzHash",
+          config_configuration_aggregator.arn) =>
+          config_configuration_aggregator.arn }

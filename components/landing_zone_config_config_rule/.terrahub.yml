@@ -1,0 +1,46 @@
+component:
+  name: landing_zone_config_config_rule
+  template:
+    locals:
+      elements_landing_zone_config_config_rule_tags_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_config_rule_tags"]
+      elements_landing_zone_config_config_rule_map: >-
+        var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_config_rule_resource"]
+    resource:
+      aws_config_config_rule:
+        landing_zone_config_config_rule:
+          provider: 'aws.${tfvar.terrahub["landing_zone_providers"]["0"]}'
+          count: >-
+            length(var.${tfvar.terrahub["landing_zone_providers"]["0"]}_provider["landing_zone_config_config_rule_resource"])
+          name: >-
+            local.elements_landing_zone_config_config_rule_map["config_${count.index}"]["name"]
+          description: >-
+            local.elements_landing_zone_config_config_rule_map["config_${count.index}"]["description"]
+          source!:
+            owner: >-
+              local.elements_landing_zone_config_config_rule_map["config_${count.index}"]["source_owner"]
+            source_identifier: >-
+              local.elements_landing_zone_config_config_rule_map["config_${count.index}"]["source_identifier"]
+          tags: >-
+            merge(local.elements_landing_zone_config_config_rule_tags_map["config_${count.index}"],
+            map("LzHash", sha1("${tfvar.terrahub["project"]["code"]}
+            ${tfvar.terrahub["component"]["name"]}
+            ${tfvar.terrahub["landing_zone_providers"]["0"]}
+            ${local.elements_landing_zone_config_config_rule_map["config_${count.index}"]["name"]}")))
+    output:
+      arns:
+        value: aws_config_config_rule.landing_zone_config_config_rule.*.arn
+      rule_ids:
+        value: aws_config_config_rule.landing_zone_config_config_rule.*.rule_id
+      landing_zone_config_config_rule_arns:
+        value: >-
+          { for config_config_rule in
+          aws_config_config_rule.landing_zone_config_config_rule.*:
+          lookup(config_config_rule.tags, "LzHash", config_config_rule.arn) =>
+          config_config_rule.arn }
+      landing_zone_config_config_rule_rule_ids:
+        value: >-
+          { for config_config_rule in
+          aws_config_config_rule.landing_zone_config_config_rule.*:
+          lookup(config_config_rule.tags, "LzHash", config_config_rule.arn) =>
+          config_config_rule.rule_id }
