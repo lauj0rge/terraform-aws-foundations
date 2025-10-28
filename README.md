@@ -1,4 +1,11 @@
-# Terraform  AWS foundations
+[![Terraform Version](https://img.shields.io/badge/terraform-≥1.5-blue?logo=terraform)](https://github.com/hashicorp/terraform)
+[![AWS](https://img.shields.io/badge/AWS-Landing%20Zone-orange?logo=amazon-aws&logoColor=white)](https://aws.amazon.com/landing-zone/)
+[![Infrastructure as Code](https://img.shields.io/badge/IaC-Terraform%20Modules-623CE4?logo=terraform)](https://www.terraform.io/)
+[![KMS Encrypted](https://img.shields.io/badge/Security-KMS%20Enabled-green)](https://aws.amazon.com/kms/)
+[![Multi-Account](https://img.shields.io/badge/Architecture-Multi--Account-yellow)](https://aws.amazon.com/organizations/)
+[![CI](https://img.shields.io/github/actions/workflow/status/lauj0rge/terraform-aws-foundations/ci.yml?label=CI%20Build)](https://github.com/lauj0rge/terraform-aws-foundations/actions)
+
+# Terraform AWS foundations
 
 A **modular Terraform blueprint** to bootstrap a secure AWS environment with best-practice defaults.
 It provisions essential foundations—VPC, subnets, IAM roles, S3 logging, CloudTrail, and AWS Organizations—so you can start from a clean, reproducible base across multiple accounts or environments.
